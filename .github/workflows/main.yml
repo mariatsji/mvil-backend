@@ -8,8 +8,15 @@ jobs:
   buid-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
     - name: Install Nix
+    - name: Cache ~/.stack, ~/.stack-work
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.stack
+          ~/.stack-work
+      key: ${{ runner.os }}-${{ matrix.ghc }}
       uses: cachix/install-nix-action@v6
     - name: Install Stack
       run: $(nix-env -iA nixpkgs.stack)
