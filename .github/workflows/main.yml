@@ -1,0 +1,19 @@
+name: "Build and deploy"
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  buid-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Nix
+      uses: cachix/install-nix-action@v6
+    - name: Install Stack
+      run: $(nix-env -iA nixpkgs.stack)
+    - name: Build project
+      run: |
+            mkdir -p bin
+            stack install
