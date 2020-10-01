@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v6
     - name: Install Nix
     - uses: actions/cache@v2
       with:
@@ -16,7 +17,6 @@ jobs:
           ~/.stack
           !~/.stack/setup-exe-cache
         key: ${{ runner.os }}-test-stack-${{ hashFiles('package.yaml') }}-${{ hashFiles('stack.yaml*') }}
-      uses: cachix/install-nix-action@v6
     - name: Install Stack
       run: $(nix-env -iA nixpkgs.stack)
     - name: Build project
