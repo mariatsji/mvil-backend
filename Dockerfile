@@ -9,6 +9,7 @@ WORKDIR /home/simon
 
 COPY bin/backend-exe .
 
+# not respected by heroku but .. can haz for testing
 EXPOSE 8080
 
 ENV GHCRTS '-T -N1 -qg -qa'
