@@ -24,3 +24,16 @@ jobs:
       run: |
             mkdir -p bin
             stack install 
+    - name: Build nix docker base image
+      run: |
+            nix-build docker.nix -o dockerImage
+            echo "loading resulting nix-built docker image"
+            docker load -i dockerImage
+    - name: Build deployable dockerimage
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/386
+          push: false
+          tags: mvil-backend:latest
