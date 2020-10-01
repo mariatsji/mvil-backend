@@ -30,10 +30,4 @@ jobs:
             echo "loading resulting nix-built docker image"
             docker load -i dockerImage
     - name: Build deployable dockerimage
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./Dockerfile
-        platforms: linux/amd64
-        push: false
-        tags: mvil-backend:latest
+      run: docker build . -f Dockerfile
