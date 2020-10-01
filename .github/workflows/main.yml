@@ -30,4 +30,6 @@ jobs:
             echo "loading resulting nix-built docker image"
             docker load -i dockerImage
     - name: Build deployable dockerimage
-      run: docker build . -f Dockerfile
+      run: |
+            pwd
+            docker build . -f Dockerfile
