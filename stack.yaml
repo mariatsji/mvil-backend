@@ -1,0 +1,8 @@
+resolver: nightly-2020-09-29
+packages:
+- .
+nix:
+  enable: true
+  packages: [ zlib ]
+extra-deps:
+- servant-server-0.18

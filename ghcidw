@@ -1,0 +1,2 @@
+#!/bin/bash
+ghcid -c "stack repl --ghc-options -W --ghc-options -Wno-unused-top-binds" --restart=./package.yaml
