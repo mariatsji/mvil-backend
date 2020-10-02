@@ -4,11 +4,21 @@
 
 module Api where
 
+import ForumPost (ForumPost)
 import Health (Health)
-import Servant (Get, JSON, Proxy (..), type (:>))
+import Servant
+import Data.Text (Text)
+import Data.Text.Encoding (decodeUtf8)
 
-type API =
-  "health" :> Get '[JSON] Health
+newtype ApiKey = ApiKey Text deriving (Eq, Show)
+
+type API 
+  =    "health" :> Get '[JSON] Health
+  :<|> "posts" :> Header "x-client-id" ApiKey :> Get '[JSON] [ForumPost]
 
 api :: Proxy API
 api = Proxy
+
+instance FromHttpApiData ApiKey where
+   parseHeader = Right . ApiKey . decodeUtf8
+   parseUrlPiece = Right . ApiKey
