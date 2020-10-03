@@ -4,6 +4,8 @@ packages:
 - .
 nix:
   enable: true
-  packages: [ zlib ]
+  packages: [ zlib postgresql ]
 extra-deps:
 - servant-server-0.18
+- postgresql-simple-migration-0.1.15.0
+- base64-bytestring-1.0.0.3

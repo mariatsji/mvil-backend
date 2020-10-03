@@ -37,6 +37,8 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , postgresql-simple
+    , postgresql-simple-migration
     , servant
     , servant-server
     , text
@@ -56,6 +58,8 @@ executable backend-exe
     , backend
     , base >=4.7 && <5
     , bytestring
+    , postgresql-simple
+    , postgresql-simple-migration
     , servant
     , servant-server
     , text
@@ -76,6 +80,8 @@ test-suite backend-test
     , backend
     , base >=4.7 && <5
     , bytestring
+    , postgresql-simple
+    , postgresql-simple-migration
     , servant
     , servant-server
     , text

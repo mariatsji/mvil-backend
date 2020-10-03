@@ -7,6 +7,15 @@ import App (server)
 import Data.ByteString (ByteString)
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
+import Database.PostgreSQL.Simple
+  ( connectPostgreSQL,
+    withTransaction,
+  )
+import Database.PostgreSQL.Simple.Migration
+  ( MigrationCommand (MigrationDirectory, MigrationInitialization),
+    MigrationContext (MigrationContext),
+    runMigration,
+  )
 import Network.Wai.Handler.Warp (run)
 import Servant.Server (serve)
 import System.Environment (lookupEnv)
@@ -21,7 +30,7 @@ main = do
   putStrLn "Starting backend"
   port <- readPort
   db <- database
-  print db
+  maybe (print "no database info found, so no migrations") ((>> print db) . migrations) db
   run port . serve api $ server
 
 database :: IO (Maybe ByteString)
@@ -32,3 +41,15 @@ database =
 (<$$>) = fmap . fmap
 
 infixr 0 <$$>
+
+migrations :: ByteString -> IO ()
+migrations connectInfo = do
+  let dir = "./migrations/"
+  con <- connectPostgreSQL connectInfo
+  res <-
+    withTransaction con (runMigration $ MigrationContext MigrationInitialization False con)
+      >> withTransaction
+        con
+        (runMigration $ MigrationContext (MigrationDirectory dir) False con)
+  print "db migrations ended one way or the other.. :"
+  print res
