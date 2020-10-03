@@ -20,6 +20,8 @@ main :: IO ()
 main = do
   putStrLn "Starting backend"
   port <- readPort
+  db <- database
+  print db
   run port . serve api $ server
 
 database :: IO (Maybe ByteString)
