@@ -19,6 +19,8 @@ import Database.PostgreSQL.Simple.Migration
 import Network.Wai.Handler.Warp (run)
 import Servant.Server (serve)
 import System.Environment (lookupEnv)
+import System.IO
+    ( stdout, hSetBuffering, BufferMode(LineBuffering) )
 
 -- heroku provides PORT
 readPort :: IO Int
@@ -27,15 +29,17 @@ readPort = do
 
 main :: IO ()
 main = do
-  putStrLn "Starting backend"
+  hSetBuffering stdout LineBuffering
+  putStrLn "Starting Mårhunden backend"
   port <- readPort
   db <- database
-  maybe (print "no database info found, so no migrations") ((>> print db) . migrations) db
+  print db
+  maybe (print "no database info found, so no migrations") migrations db
   run port . serve api $ server
 
 database :: IO (Maybe ByteString)
 database =
-  encodeUtf8 . T.pack . (<> "?sslMode=Require") . ("postgresql://" <>) <$$> lookupEnv "DATABASE_URL"
+  encodeUtf8 . T.pack . ("postgresql://" <>) <$$> lookupEnv "DATABASE_URL"
 
 (<$$>) :: (a -> b) -> IO (Maybe a) -> IO (Maybe b)
 (<$$>) = fmap . fmap
