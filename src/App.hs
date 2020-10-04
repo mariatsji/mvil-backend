@@ -19,7 +19,7 @@ server mCon = health :<|> authed fetchUsing mCon :<|> authed2 insertUsing mCon :
 health :: Handler Health
 health = pure $ Health "ok"
 
-authed2 :: (Maybe Connection -> a -> Handler a) -> Maybe Connection -> Maybe ApiKey -> a -> Handler a
+authed2 :: (Maybe Connection -> a -> Handler [a]) -> Maybe Connection -> Maybe ApiKey -> a -> Handler [a]
 authed2 _ _ Nothing _ = throwError $ err403 {errBody = "no access without x-client-key header"}
 authed2 f mCon k a = authed (`f` a) mCon k
 
@@ -33,9 +33,9 @@ truncateUsing :: Maybe Connection -> Handler Text
 truncateUsing Nothing = pure "No database"
 truncateUsing (Just conn) = liftIO $ trunc conn >> pure "truncated"
 
-insertUsing :: Maybe Connection -> ForumPost -> Handler ForumPost
-insertUsing Nothing p = pure p
-insertUsing (Just con) p = liftIO $ insert con p >> pure p
+insertUsing :: Maybe Connection -> ForumPost -> Handler [ForumPost]
+insertUsing Nothing p = pure [p]
+insertUsing (Just con) p = liftIO $ insert con p >> fetch con
 
 fetchUsing :: Maybe Connection -> Handler [ForumPost]
 fetchUsing Nothing = do
