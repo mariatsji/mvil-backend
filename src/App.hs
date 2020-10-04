@@ -6,14 +6,15 @@ import Api
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Time (getCurrentTime)
 import Data.Time.Clock (UTCTime)
-import Database
+import Database ( insert, fetch, trunc )
 import Database.PostgreSQL.Simple (Connection)
 import ForumPost (ForumPost (ForumPost))
 import Health (Health (Health))
 import Servant
+import Data.Text (Text)
 
 server :: Maybe Connection -> ServerT API Handler
-server mCon = health :<|> posts mCon
+server mCon = health :<|> posts mCon :<|> insertPost mCon :<|> trunc' mCon
 
 health :: Handler Health
 health = pure $ Health "ok"
@@ -23,6 +24,26 @@ posts _ Nothing = throwError $ err403 {errBody = "no access without x-client-key
 posts mCon k
   | k `elem` accessList = fetchUsing mCon
   | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"}
+
+trunc' :: Maybe Connection -> Maybe ApiKey -> Handler Text
+trunc' _ Nothing = throwError $ err403 {errBody = "no access without x-client-key header"}
+trunc' mCon k
+  | k `elem` accessList = truncateUsing mCon
+  | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"} 
+
+truncateUsing :: Maybe Connection -> Handler Text
+truncateUsing Nothing = pure "No database"
+truncateUsing (Just conn) = liftIO $ trunc conn >> pure "truncated"
+
+insertPost :: Maybe Connection -> Maybe ApiKey -> ForumPost -> Handler ForumPost
+insertPost _ Nothing _ = throwError $ err403 {errBody = "no access without x-client-key header"}
+insertPost mCon k post
+  | k `elem` accessList = insertUsing mCon post
+  | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"}
+
+insertUsing :: Maybe Connection -> ForumPost -> Handler ForumPost
+insertUsing Nothing p = pure p
+insertUsing (Just con) p = liftIO $ insert con p >> pure p
 
 fetchUsing :: Maybe Connection -> Handler [ForumPost]
 fetchUsing Nothing = do
