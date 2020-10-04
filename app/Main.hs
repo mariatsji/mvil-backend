@@ -4,11 +4,10 @@ module Main where
 
 import Api (api)
 import App (server)
-import Data.ByteString (ByteString)
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
 import Database.PostgreSQL.Simple
-  ( connectPostgreSQL,
+  (Connection,  connectPostgreSQL,
     withTransaction,
   )
 import Database.PostgreSQL.Simple.Migration
@@ -33,23 +32,22 @@ main = do
   putStrLn "Starting Mårhunden backend"
   port <- readPort
   db <- database
-  print db
   maybe (print "no database info found, so no migrations") migrations db
-  run port . serve api $ server
+  run port . serve api $ server db
 
-database :: IO (Maybe ByteString)
-database =
-  encodeUtf8 . T.pack <$$> lookupEnv "DATABASE_URL"
+database :: IO (Maybe Connection)
+database = do
+  mbs <- encodeUtf8 . T.pack <$$> lookupEnv "DATABASE_URL"
+  traverse connectPostgreSQL mbs
 
 (<$$>) :: (a -> b) -> IO (Maybe a) -> IO (Maybe b)
 (<$$>) = fmap . fmap
 
 infixr 0 <$$>
 
-migrations :: ByteString -> IO ()
-migrations connectInfo = do
+migrations :: Connection -> IO ()
+migrations con = do
   let dir = "./migrations/"
-  con <- connectPostgreSQL connectInfo
   res <-
     withTransaction con (runMigration $ MigrationContext MigrationInitialization False con)
       >> withTransaction

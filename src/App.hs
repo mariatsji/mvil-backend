@@ -6,23 +6,29 @@ import Api
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Data.Time (getCurrentTime)
 import Data.Time.Clock (UTCTime)
+import Database
+import Database.PostgreSQL.Simple (Connection)
 import ForumPost (ForumPost (ForumPost))
 import Health (Health (Health))
 import Servant
 
-server :: ServerT API Handler
-server = health :<|> posts
+server :: Maybe Connection -> ServerT API Handler
+server mCon = health :<|> posts mCon
 
 health :: Handler Health
 health = pure $ Health "ok"
 
-posts :: Maybe ApiKey -> Handler [ForumPost]
-posts Nothing = throwError $ err403 {errBody = "no access without x-client-key header"}
-posts k
-  | k `elem` accessList = do
-    now <- liftIO getCurrentTime
-    pure $ dummyPosts now
+posts :: Maybe Connection -> Maybe ApiKey -> Handler [ForumPost]
+posts _ Nothing = throwError $ err403 {errBody = "no access without x-client-key header"}
+posts mCon k
+  | k `elem` accessList = fetchUsing mCon
   | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"}
+
+fetchUsing :: Maybe Connection -> Handler [ForumPost]
+fetchUsing Nothing = do
+  now <- liftIO getCurrentTime
+  pure $ dummyPosts now
+fetchUsing (Just con) = liftIO $ fetch con
 
 accessList :: [Maybe ApiKey]
 accessList =
