@@ -17,4 +17,6 @@ COPY migrations/* /home/simon/migrations/
 
 ENV GHCRTS '-T -N1 -qg -qa'
 
+ENV LANG 'C.UTF-8'
+
 ENTRYPOINT ["/home/simon/backend-exe"]
