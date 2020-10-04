@@ -4,42 +4,34 @@ module App where
 
 import Api
 import Control.Monad.IO.Class (MonadIO (liftIO))
+import Data.Text (Text)
 import Data.Time (getCurrentTime)
 import Data.Time.Clock (UTCTime)
-import Database ( insert, fetch, trunc )
+import Database (fetch, insert, trunc)
 import Database.PostgreSQL.Simple (Connection)
 import ForumPost (ForumPost (ForumPost))
 import Health (Health (Health))
 import Servant
-import Data.Text (Text)
 
 server :: Maybe Connection -> ServerT API Handler
-server mCon = health :<|> posts mCon :<|> insertPost mCon :<|> trunc' mCon
+server mCon = health :<|> authed fetchUsing mCon :<|> authed2 insertUsing mCon :<|> authed truncateUsing mCon
 
 health :: Handler Health
 health = pure $ Health "ok"
 
-posts :: Maybe Connection -> Maybe ApiKey -> Handler [ForumPost]
-posts _ Nothing = throwError $ err403 {errBody = "no access without x-client-key header"}
-posts mCon k
-  | k `elem` accessList = fetchUsing mCon
-  | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"}
+authed2 :: (Maybe Connection -> a -> Handler a) -> Maybe Connection -> Maybe ApiKey -> a -> Handler a
+authed2 _ _ Nothing _ = throwError $ err403 {errBody = "no access without x-client-key header"}
+authed2 f mCon k a = authed (`f` a) mCon k
 
-trunc' :: Maybe Connection -> Maybe ApiKey -> Handler Text
-trunc' _ Nothing = throwError $ err403 {errBody = "no access without x-client-key header"}
-trunc' mCon k
-  | k `elem` accessList = truncateUsing mCon
-  | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"} 
+authed :: (Maybe Connection -> Handler a) -> Maybe Connection -> Maybe ApiKey -> Handler a
+authed _ _ Nothing = throwError $ err403 {errBody = "no access without x-client-key header"}
+authed f mCon k
+  | k `elem` accessList = f mCon
+  | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"}
 
 truncateUsing :: Maybe Connection -> Handler Text
 truncateUsing Nothing = pure "No database"
 truncateUsing (Just conn) = liftIO $ trunc conn >> pure "truncated"
-
-insertPost :: Maybe Connection -> Maybe ApiKey -> ForumPost -> Handler ForumPost
-insertPost _ Nothing _ = throwError $ err403 {errBody = "no access without x-client-key header"}
-insertPost mCon k post
-  | k `elem` accessList = insertUsing mCon post
-  | otherwise = throwError $ err403 {errBody = "no access with invalid x-client-key header"}
 
 insertUsing :: Maybe Connection -> ForumPost -> Handler ForumPost
 insertUsing Nothing p = pure p
