@@ -39,7 +39,7 @@ main = do
 
 database :: IO (Maybe ByteString)
 database =
-  encodeUtf8 . T.pack . ("postgresql://" <>) <$$> lookupEnv "DATABASE_URL"
+  encodeUtf8 . T.pack <$$> lookupEnv "DATABASE_URL"
 
 (<$$>) :: (a -> b) -> IO (Maybe a) -> IO (Maybe b)
 (<$$>) = fmap . fmap
