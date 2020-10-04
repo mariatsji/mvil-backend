@@ -12,6 +12,6 @@ import Database.PostgreSQL.Simple (FromRow, ToRow)
 data ForumPost = ForumPost
   { author :: Text,
     body :: Text,
-    timestamp :: UTCTime
+    timestamp :: Maybe UTCTime
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON, FromRow, ToRow)
